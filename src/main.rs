@@ -5,15 +5,19 @@ use octocrab::{
     models::pulls::PullRequest,
     params::{pulls::Sort, Direction, State},
 };
+use tokio::try_join;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("Generating change list for new dev update");
-    let mut pull_requests = list_prs("lemmy").await?;
-    pull_requests.append(&mut list_prs("lemmy-ui").await?);
+    let mut pull_requests: Vec<PullRequest> = vec![];
 
-    let last_dev_update = last_dev_update().await?;
+    let (mut lemmy_prs, mut lemmy_ui_prs, last_dev_update) =
+        try_join!(list_prs("lemmy"), list_prs("lemmy-ui"), last_dev_update())?;
+    pull_requests.append(&mut lemmy_prs);
+    pull_requests.append(&mut lemmy_ui_prs);
     println!("Last dev update was at {}", last_dev_update.published);
+    println!("\n{}", "=".repeat(100));
 
     pull_requests
         .into_iter()
@@ -44,6 +48,8 @@ async fn main() -> Result<()> {
                 println!("[{}]({})", pr.title.clone().unwrap().trim(), pr.url,);
             }
         });
+
+    println!("\n");
 
     Ok(())
 }
