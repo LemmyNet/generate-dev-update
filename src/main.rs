@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
         .sorted_by(|a, b| Ord::cmp(&a.1.len(), &b.1.len()))
         // Print as markdown
         .for_each(|pr| {
-            println!("\n\n## {}\n\n", pr.0);
+            println!("\n## {}\n", pr.0);
             for (_, pr) in pr.1 {
                 println!("[{}]({})", pr.title.clone().unwrap().trim(), pr.url,);
             }
@@ -74,8 +74,13 @@ async fn last_dev_update() -> Result<Post> {
     let client = reqwest::Client::builder()
         .user_agent("generate-dev-update")
         .build()?;
-    let res = client.get("https://lemmy.ml/api/v3/post/list?limit=20&sort=New&type_=All&community_name=announcements").send().await?
-    .json::<GetPostsResponse>().await?;
+    let url = "https://lemmy.ml/api/v3/post/list?limit=20&sort=New&type_=All&community_name=announcements";
+    let res = client
+        .get(url)
+        .send()
+        .await?
+        .json::<GetPostsResponse>()
+        .await?;
     Ok(res
         .posts
         .into_iter()
