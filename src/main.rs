@@ -1,31 +1,31 @@
 use anyhow::Result;
 use itertools::Itertools;
-use octocrab::params::{pulls::Sort, Direction, State};
+use octocrab::{
+    models::pulls::PullRequest,
+    params::{pulls::Sort, Direction, State},
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // TODO: also include lemmy-ui repo and merge results
-    let page = octocrab::instance()
-        .pulls("LemmyNet", "lemmy")
-        .list()
-        .state(State::Closed)
-        .head("main")
-        .sort(Sort::Updated)
-        .direction(Direction::Descending)
-        .per_page(100)
-        .send()
-        .await?;
+    // Get list of pull requests from lemmy and lemmy-ui repos
+    let mut pull_requests = list_prs("lemmy").await?;
+    pull_requests.append(&mut list_prs("lemmy-ui").await?);
 
-    // TODO: use lemmy api to find date of last dev update (regex), 
+    // TODO: use lemmy api to find date of last dev update (regex),
     //       then consider all PRs since that time
 
-    page.items
-        .iter()
+    pull_requests
         .into_iter()
         .filter(|pr| pr.merged_at.is_some())
         // Ignore PRs with label `internal`
         // TODO: apply this to refactoring changes and similar
-        .filter(|pr| pr.labels.clone().unwrap().iter().all(|l| l.name != "internal"))
+        .filter(|pr| {
+            pr.labels
+                .clone()
+                .unwrap()
+                .iter()
+                .all(|l| l.name != "internal")
+        })
         .map(|pr| (pr.user.clone().unwrap().login, pr))
         .sorted_by(|a, b| Ord::cmp(&b.0, &a.0))
         // Ignore dependency updates
@@ -45,4 +45,18 @@ async fn main() -> Result<()> {
         });
 
     Ok(())
+}
+
+async fn list_prs(repo: &str) -> Result<Vec<PullRequest>> {
+    Ok(octocrab::instance()
+        .pulls("LemmyNet", repo)
+        .list()
+        .state(State::Closed)
+        .head("main")
+        .sort(Sort::Updated)
+        .direction(Direction::Descending)
+        .per_page(100)
+        .send()
+        .await?
+        .items)
 }
