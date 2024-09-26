@@ -1,5 +1,6 @@
 use anyhow::Result;
 use itertools::Itertools;
+use lemmy_api_common::{lemmy_db_schema::source::post::Post, post::GetPostsResponse};
 use octocrab::{
     models::pulls::PullRequest,
     params::{pulls::Sort, Direction, State},
@@ -7,16 +8,16 @@ use octocrab::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Get list of pull requests from lemmy and lemmy-ui repos
+    println!("Generating change list for new dev update");
     let mut pull_requests = list_prs("lemmy").await?;
     pull_requests.append(&mut list_prs("lemmy-ui").await?);
 
-    // TODO: use lemmy api to find date of last dev update (regex),
-    //       then consider all PRs since that time
+    let last_dev_update = last_dev_update().await?;
+    println!("Last dev update was at {}", last_dev_update.published);
 
     pull_requests
         .into_iter()
-        .filter(|pr| pr.merged_at.is_some())
+        .filter(|pr| pr.merged_at.unwrap_or_default() > last_dev_update.published)
         // Ignore PRs with label `internal`
         // TODO: apply this to refactoring changes and similar
         .filter(|pr| {
@@ -47,6 +48,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+/// Get list of pull requests from given repo under LemmyNet
 async fn list_prs(repo: &str) -> Result<Vec<PullRequest>> {
     Ok(octocrab::instance()
         .pulls("LemmyNet", repo)
@@ -59,4 +61,20 @@ async fn list_prs(repo: &str) -> Result<Vec<PullRequest>> {
         .send()
         .await?
         .items)
+}
+
+// Use lemmy api to find last dev update post
+async fn last_dev_update() -> Result<Post> {
+    let client = reqwest::Client::builder()
+        .user_agent("generate-dev-update")
+        .build()?;
+    let res = client.get("https://lemmy.ml/api/v3/post/list?limit=20&sort=New&type_=All&community_name=announcements").send().await?
+    .json::<GetPostsResponse>().await?;
+    Ok(res
+        .posts
+        .into_iter()
+        .map(|p| p.post)
+        .filter(|p| p.name.contains("Lemmy Development Update"))
+        .next()
+        .unwrap())
 }
