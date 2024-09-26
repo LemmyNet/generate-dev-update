@@ -8,5 +8,8 @@ anyhow = "1.0.89"
 itertools = "0.13.0"
 lemmy_api_common = "0.19.5"
 octocrab = "0.40.0"
-reqwest = {version = "0.12.7", default-features = false, features = ["rustls-tls", "json"] }
+reqwest = { version = "0.12.7", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
