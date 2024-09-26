@@ -13,13 +13,6 @@ steps:
     commands:
       - taplo format --check
 
-  cargo_check:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo
-    commands:
-      - cargo check --all-features --all-targets
-
   cargo_clippy:
     image: *rust_image
     environment:
