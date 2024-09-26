@@ -85,7 +85,6 @@ async fn last_dev_update() -> Result<Post> {
         .posts
         .into_iter()
         .map(|p| p.post)
-        .filter(|p| p.name.contains("Lemmy Development Update"))
-        .next()
+        .find(|p| p.name.contains("Lemmy Development Update"))
         .unwrap())
 }
