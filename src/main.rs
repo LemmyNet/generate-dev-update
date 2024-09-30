@@ -43,7 +43,11 @@ async fn main() -> Result<()> {
         .for_each(|pr| {
             println!("\n## {}\n", pr.0);
             for (_, pr) in pr.1 {
-                println!("[{}]({})", pr.title.clone().unwrap().trim(), pr.url,);
+                println!(
+                    "- [{}]({})",
+                    pr.title.clone().unwrap().trim(),
+                    pr.html_url.unwrap().as_str()
+                );
             }
         });
 

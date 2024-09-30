@@ -8,7 +8,6 @@ steps:
       - /root/.cargo/bin/cargo fmt -- --check
 
   toml_fmt:
-    group: format
     image: tamasfe/taplo:0.8.1
     commands:
       - taplo format --check
@@ -28,9 +27,10 @@ steps:
     commands:
       - cargo test --all-features --no-fail-fast
 
-  cargo_run:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo
-    commands:
-      - cargo run
+  # Not working currently because of rate limiting.
+  # cargo_run:
+  #   image: *rust_image
+  #   environment:
+  #     CARGO_HOME: .cargo
+  #   commands:
+  #     - cargo run
