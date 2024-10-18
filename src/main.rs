@@ -7,6 +7,7 @@ use tokio::try_join;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    rustls::crypto::ring::default_provider().install_default().unwrap();
     println!("Generating change list for new dev update");
     let mut pull_requests: Vec<PullRequest> = vec![];
 
