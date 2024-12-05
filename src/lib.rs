@@ -11,7 +11,7 @@ pub async fn list_prs(repo: &str) -> Result<Vec<PullRequest>> {
         .pulls("LemmyNet", repo)
         .list()
         .state(State::Closed)
-        .head("main")
+        .base("main")
         .sort(Sort::Updated)
         .direction(Direction::Descending)
         .per_page(100)
