@@ -1,40 +1,46 @@
 use anyhow::Result;
-use generate_dev_update::{last_dev_update, list_prs};
+use clap::{command, Parser};
+use generate_dev_update::{list_prs, string_to_utc};
 use itertools::Itertools;
-use octocrab::models::pulls::PullRequest;
 use tokio::try_join;
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+  /// The start date for the pull request range. (IE 2024-10-01)
+  start_date: String,
+  /// The end date for the pull request range. (IE 2024-11-01)
+  end_date: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
   rustls::crypto::ring::default_provider()
     .install_default()
     .unwrap();
-  println!("Generating change list for new dev update");
-  let mut pull_requests: Vec<PullRequest> = vec![];
 
-  let (mut lemmy_prs, mut lemmy_ui_prs, last_dev_update) =
-    try_join!(list_prs("lemmy"), list_prs("lemmy-ui"), last_dev_update())?;
-  pull_requests.append(&mut lemmy_prs);
-  pull_requests.append(&mut lemmy_ui_prs);
-  println!("Last dev update was at {}", last_dev_update.published);
-  println!("\n{}", "=".repeat(100));
+  let cli = Cli::parse();
+
+  let start_date = string_to_utc(&cli.start_date)?;
+  let end_date = string_to_utc(&cli.end_date)?;
+
+  println!(
+    "# Dev Update from {} to {}",
+    start_date.date_naive(),
+    end_date.date_naive()
+  );
+
+  let (lemmy_prs, lemmy_ui_prs) = try_join!(
+    list_prs("lemmy", &start_date, &end_date),
+    list_prs("lemmy-ui", &start_date, &end_date)
+  )?;
+
+  let pull_requests = [lemmy_prs, lemmy_ui_prs].concat();
 
   pull_requests
     .into_iter()
-    .filter(|pr| pr.merged_at.unwrap_or_default() > last_dev_update.published)
-    // Ignore PRs with label `internal`
-    // TODO: apply this to refactoring changes and similar
-    .filter(|pr| {
-      pr.labels
-        .clone()
-        .unwrap()
-        .iter()
-        .all(|l| l.name != "internal")
-    })
     .map(|pr| (pr.user.clone().unwrap().login, pr))
     .sorted_by(|a, b| Ord::cmp(&b.0, &a.0))
-    // Ignore dependency updates
-    .filter(|(author, _)| author != "renovate[bot]")
     // Group by author name
     .chunk_by(|(author, _)| author.clone())
     .into_iter()
