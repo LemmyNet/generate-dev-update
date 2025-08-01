@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.89"
-itertools = "0.13.0"
-lemmy_api_common = "0.19.5"
-octocrab = "0.41.0"
-reqwest = { version = "0.12.7", default-features = false, features = [
+anyhow = "1.0.98"
+chrono = "0.4.41"
+clap = { version = "4.5.42", features = ["derive"] }
+itertools = "0.14.0"
+octocrab = "0.44.1"
+reqwest = { version = "0.12.22", default-features = false, features = [
   "rustls-tls",
   "json",
 ] }
-rustls = { version = "0.23.15", default-features = false }
-tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
+rustls = { version = "0.23.31", default-features = false }
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
