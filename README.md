@@ -1,6 +1,6 @@
 # Generate-dev-update
 
-Generates a lemmy, and lemmy-ui dev update for a given range.
+Generates a lemmy, lemmy-ui, and jerboa dev update for a given range.
 
 ## Example
 
