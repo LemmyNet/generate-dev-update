@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
 
   pull_requests
     .into_iter()
-    .map(|pr| (pr.user.clone().unwrap().login, pr))
+    .map(|pr| (pr.user.login.clone(), pr))
     .sorted_by(|a, b| Ord::cmp(&b.0, &a.0))
     // Group by author name
     .chunk_by(|(author, _)| author.clone())
@@ -53,11 +53,7 @@ async fn main() -> Result<()> {
     .for_each(|pr| {
       println!("\n## {}\n", pr.0);
       for (_, pr) in pr.1 {
-        println!(
-          "- [{}]({})",
-          pr.title.clone().unwrap().trim(),
-          pr.html_url.unwrap().as_str()
-        );
+        println!("- [{}]({})", pr.title.trim(), pr.html_url.as_str());
       }
     });
 

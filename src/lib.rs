@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use octocrab::{
-  models::pulls::PullRequest,
+  models::pulls::SimplePullRequest,
   params::{pulls::Sort, Direction, State},
 };
 
@@ -10,8 +10,8 @@ pub async fn list_prs(
   repo: &str,
   start_date: &DateTime<Utc>,
   end_date: &DateTime<Utc>,
-) -> Result<Vec<PullRequest>> {
-  let mut results: Vec<PullRequest> = Vec::new();
+) -> Result<Vec<SimplePullRequest>> {
+  let mut results: Vec<SimplePullRequest> = Vec::new();
 
   let mut current_date = Utc::now();
   let mut page = 1u32;
@@ -34,14 +34,14 @@ pub async fn list_prs(
     // Set the current date and increase the page.
     current_date = fetch_results
       .last()
-      .map(|pr| pr.updated_at.unwrap_or_default())
+      .map(|pr| pr.updated_at)
       .unwrap_or_default();
     page += 1;
 
     results.append(&mut fetch_results);
   }
 
-  let filtered_results: Vec<PullRequest> = results
+  let filtered_results: Vec<SimplePullRequest> = results
     .into_iter()
     // Filter results to the current range
     .filter(|pr| {
@@ -49,20 +49,9 @@ pub async fn list_prs(
     })
     // Ignore PRs with label `internal`
     // TODO: apply this to refactoring changes and similar
-    .filter(|pr| {
-      pr.labels
-        .clone()
-        .unwrap()
-        .iter()
-        .all(|l| l.name != "internal")
-    })
+    .filter(|pr| pr.labels.clone().iter().all(|l| l.name != "internal"))
     // Ignore dependency updates
-    .filter(|pr| {
-      pr.user
-        .clone()
-        .map(|u| u.login != "renovate[bot]")
-        .unwrap_or(false)
-    })
+    .filter(|pr| pr.user.login != "renovate[bot]")
     .collect();
 
   Ok(filtered_results)
