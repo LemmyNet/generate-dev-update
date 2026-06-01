@@ -30,14 +30,31 @@ async fn main() -> Result<()> {
     end_date.date_naive()
   );
 
-  let (lemmy_prs, lemmy_ui_prs, joinlemmy_prs, jerboa_prs) = try_join!(
+  let (
+    lemmy_prs,
+    lemmy_ui_prs,
+    joinlemmy_prs,
+    jerboa_prs,
+    lemmy_js_client_prs,
+    lemmy_client_rs_prs,
+  ) = try_join!(
     list_prs("lemmy", &start_date, &end_date),
     list_prs("lemmy-ui", &start_date, &end_date),
     list_prs("joinlemmy-site", &start_date, &end_date),
     list_prs("jerboa", &start_date, &end_date),
+    list_prs("lemmy-js-client", &start_date, &end_date),
+    list_prs("lemmy-client-rs", &start_date, &end_date),
   )?;
 
-  let pull_requests = [lemmy_prs, lemmy_ui_prs, joinlemmy_prs, jerboa_prs].concat();
+  let pull_requests = [
+    lemmy_prs,
+    lemmy_ui_prs,
+    joinlemmy_prs,
+    jerboa_prs,
+    lemmy_js_client_prs,
+    lemmy_client_rs_prs,
+  ]
+  .concat();
 
   pull_requests
     .into_iter()
