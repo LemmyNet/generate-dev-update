@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use octocrab::{
   models::pulls::PullRequest,
-  params::{pulls::Sort, Direction, State},
+  params::{Direction, State, pulls::Sort},
 };
 
 /// Get list of pull requests from given repo under LemmyNet
