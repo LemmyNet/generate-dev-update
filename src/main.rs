@@ -1,16 +1,15 @@
 use anyhow::Result;
+use chrono::Month;
 use clap::Parser;
 use futures_util::future::try_join_all;
 use generate_dev_update::{list_prs, string_to_utc};
 use itertools::Itertools;
+use std::str::FromStr;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-  /// The start date for the pull request range. (IE 2024-10-01)
-  start_date: String,
-  /// The end date for the pull request range. (IE 2024-11-01)
-  end_date: String,
+  date: String,
 }
 
 #[tokio::main]
@@ -20,9 +19,14 @@ async fn main() -> Result<()> {
     .unwrap();
 
   let cli = Cli::parse();
-
-  let start_date = string_to_utc(&cli.start_date)?;
-  let end_date = string_to_utc(&cli.end_date)?;
+  const PARSE_ERROR_MSG: &str = "Date must be formatted like '2026-5'";
+  let (year, month) = cli.date.split_once('-').expect(PARSE_ERROR_MSG);
+  let year = i32::from_str(year).expect(PARSE_ERROR_MSG);
+  let month = Month::try_from(u8::from_str(month).expect(PARSE_ERROR_MSG))?;
+  let month_num = month.number_from_month();
+  let month_days = month.num_days(year).unwrap();
+  let start_date = string_to_utc(&format!("{year}-{month_num}-01"))?;
+  let end_date = string_to_utc(&format!("{year}-{month_num}-{month_days}"))?;
 
   println!(
     "# Dev Update from {} to {}",
